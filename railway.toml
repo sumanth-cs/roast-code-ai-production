@@ -1,0 +1,24 @@
+# railway.toml
+[build]
+builder = "dockerfile"
+dockerfile = "Dockerfile.railway"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[[services]]
+name = "roast-code-ai"
+port = 10000
+
+[services.env]
+OPENAI_API_KEY = ""
+GEMINI_API_KEY = ""
+ELEVENLABS_API_KEY = ""
+FLASK_DEBUG = "False"
+SECRET_KEY = "railway-generates-this"
+
+[services.checks]
+http = "/api/health"
