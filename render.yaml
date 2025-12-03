@@ -1,32 +1,70 @@
-# # render.yaml - UPDATED
-# services:
-#   # Redis Service (MUST come first since backend depends on it)
-#   - type: redis
-#     name: roast-redis
-#     plan: free
-#     ipAllowList: []
-#     maxmemoryPolicy: noeviction
+# # # render.yaml - UPDATED
+# # services:
+# #   # Redis Service (MUST come first since backend depends on it)
+# #   - type: redis
+# #     name: roast-redis
+# #     plan: free
+# #     ipAllowList: []
+# #     maxmemoryPolicy: noeviction
 
-#   # Backend Service
+# #   # Backend Service
+# #   - type: web
+# #     name: roast-code-backend
+# #     env: docker
+# #     dockerfilePath: ./Dockerfile.backend
+# #     plan: free
+# #     disk:
+# #       name: data
+# #       mountPath: /data
+# #       sizeGB: 1
+# #     envVars:
+# #       - key: REDIS_URL
+# #         fromService:
+# #           name: roast-redis
+# #           type: redis
+# #           property: connectionString
+# #       - key: FLASK_DEBUG
+# #         value: "False"
+# #       - key: PORT
+# #         value: "5001"
+# #       - key: SECRET_KEY
+# #         generateValue: true
+# #       - key: OPENAI_API_KEY
+# #         sync: false
+# #       - key: GEMINI_API_KEY
+# #         sync: false
+# #       - key: ELEVENLABS_API_KEY
+# #         sync: false
+# #     healthCheckPath: /api/health
+# #     healthCheckTimeout: 10
+# #     autoDeploy: true
+
+# #   # Frontend Service
+# #   - type: web
+# #     name: roast-code-frontend
+# #     env: docker
+# #     dockerfilePath: ./Dockerfile.frontend
+# #     plan: free
+# #     envVars:
+# #       - key: BACKEND_URL
+# #         fromService:
+# #           name: roast-code-backend
+# #           type: web
+# #           property: host
+# #     autoDeploy: true
+
+# services:
 #   - type: web
-#     name: roast-code-backend
+#     name: roast-code-ai
 #     env: docker
-#     dockerfilePath: ./Dockerfile.backend
 #     plan: free
-#     disk:
-#       name: data
-#       mountPath: /data
-#       sizeGB: 1
 #     envVars:
+#       - key: PORT
+#         value: "10000"
 #       - key: REDIS_URL
-#         fromService:
-#           name: roast-redis
-#           type: redis
-#           property: connectionString
+#         value: "redis://localhost:6379"
 #       - key: FLASK_DEBUG
 #         value: "False"
-#       - key: PORT
-#         value: "5001"
 #       - key: SECRET_KEY
 #         generateValue: true
 #       - key: OPENAI_API_KEY
@@ -36,21 +74,6 @@
 #       - key: ELEVENLABS_API_KEY
 #         sync: false
 #     healthCheckPath: /api/health
-#     healthCheckTimeout: 10
-#     autoDeploy: true
-
-#   # Frontend Service
-#   - type: web
-#     name: roast-code-frontend
-#     env: docker
-#     dockerfilePath: ./Dockerfile.frontend
-#     plan: free
-#     envVars:
-#       - key: BACKEND_URL
-#         fromService:
-#           name: roast-code-backend
-#           type: web
-#           property: host
 #     autoDeploy: true
 
 services:
@@ -61,8 +84,6 @@ services:
     envVars:
       - key: PORT
         value: "10000"
-      - key: REDIS_URL
-        value: "redis://localhost:6379"
       - key: FLASK_DEBUG
         value: "False"
       - key: SECRET_KEY
