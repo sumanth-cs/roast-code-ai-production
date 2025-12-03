@@ -1,33 +1,67 @@
-# Dockerfile (if you want single container)
+# # Dockerfile (if you want single container)
+# FROM python:3.10-slim
+
+# WORKDIR /app
+
+# # Install system dependencies
+# RUN apt-get update && apt-get install -y \
+#     gcc \
+#     g++ \
+#     curl \
+#     redis-server \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Copy requirements
+# COPY requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt
+
+# # Copy all code
+# COPY . .
+
+# # Create non-root user
+# RUN useradd -m -u 1000 appuser
+# USER appuser
+
+# # Expose ports
+# EXPOSE 5001
+# EXPOSE 8501
+
+# # Start script
+# COPY start.sh .
+# RUN chmod +x start.sh
+
+# CMD ["./start.sh"]
+
+# Dockerfile - SINGLE CONTAINER FOR RENDER
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
     curl \
-    redis-server \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
 COPY requirements.txt .
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy all code
 COPY . .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser
-USER appuser
+# Create a simple startup script
+RUN echo '#!/bin/bash\n\
+\n\
+# Start both services\n\
+cd backend && gunicorn --bind 0.0.0.0:\$PORT --workers 2 app:app &\n\
+\n\
+cd ../frontend && streamlit run app.py --server.port 8501 --server.address 0.0.0.0 &\n\
+\n\
+# Keep container running\n\
+wait\n' > start.sh && chmod +x start.sh
 
-# Expose ports
-EXPOSE 5001
-EXPOSE 8501
-
-# Start script
-COPY start.sh .
-RUN chmod +x start.sh
+EXPOSE 10000 8501
 
 CMD ["./start.sh"]

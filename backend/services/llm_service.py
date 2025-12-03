@@ -6,6 +6,56 @@ from openai import OpenAI
 from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 import google.generativeai as genai
 
+import os
+from transformers import pipeline
+
+class LLMService:
+    def __init__(self):
+        # Use lightweight model instead of fine-tuned one
+        try:
+            # Try to use a small, fast model
+            self.roast_generator = pipeline('text-generation', 
+                                           model='distilgpt2',
+                                           tokenizer='distilgpt2')
+        except:
+            # Fallback to simple template-based roasting
+            self.roast_generator = None
+        
+        # Load roast templates
+        with open('ml_models/roast_templates.json', 'r') as f:
+            self.roast_templates = json.load(f)
+    
+    async def generate_roast(self, code: str, issues: List[str], language: str, intensity: str = 'medium') -> Dict:
+        """Generate roast - use templates if model not available"""
+        import random
+        
+        if not issues:
+            roast_text = random.choice([
+                "Your code looks pretty good! Keep it up!",
+                "No major issues found. You're doing great!",
+                "Clean code! I'm impressed!"
+            ])
+        else:
+            # Use template-based roasting
+            category = random.choice(list(self.roast_templates.keys()))
+            if intensity in self.roast_templates[category]:
+                templates = self.roast_templates[category][intensity]
+                roast_text = random.choice(templates).format(
+                    name="your code",
+                    depth="several",
+                    score="some",
+                    issue=issues[0] if issues else "something"
+                )
+            else:
+                roast_text = f"Found {len(issues)} issues in your code."
+        
+        return {
+            'text': roast_text,
+            'intensity': intensity,
+            'language': language,
+            'model': 'template-based'
+        }
+
 class LLMService:
     """Service for interacting with various LLMs"""
     

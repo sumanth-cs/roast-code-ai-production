@@ -1,0 +1,24 @@
+# render.simple.yaml - SIMPLE VERSION
+services:
+  # Single service with everything
+  - type: web
+    name: roast-code-ai
+    env: docker
+    plan: free
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: REDIS_URL
+        value: "redis://localhost:6379"
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
