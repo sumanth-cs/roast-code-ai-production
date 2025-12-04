@@ -411,65 +411,17 @@
 #     port = int(os.getenv('PORT', 5001))
 #     socketio.run(app, host='0.0.0.0', port=port, debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
 
-# backend/app.py - SIMPLIFIED VERSION
+# backend/app.py - ULTRA SIMPLE VERSION
 import os
-import json
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, origins=["*"])
-
-# Simple code analyzer
-def analyze_code_simple(code: str, language: str = 'python'):
-    """Simple code analysis without external dependencies"""
-    issues = []
-    metrics = {}
-    
-    try:
-        # Basic metrics
-        lines = code.splitlines()
-        metrics['line_count'] = len(lines)
-        metrics['character_count'] = len(code)
-        
-        # Count functions
-        if language == 'python':
-            metrics['function_count'] = code.count('def ')
-        else:
-            metrics['function_count'] = 0
-        
-        # Check for common issues
-        if len(lines) > 200:
-            issues.append("Code is too long (over 200 lines)")
-        
-        # Check for long lines
-        for i, line in enumerate(lines, 1):
-            if len(line) > 120:
-                issues.append(f"Line {i}: Too long ({len(line)} characters)")
-        
-        # Calculate simple quality score
-        quality_score = 100
-        quality_score -= len(issues) * 5
-        quality_score = max(0, min(100, quality_score))
-        
-        return {
-            'issues': issues[:10],
-            'metrics': metrics,
-            'quality_score': quality_score,
-            'grade': 'A' if quality_score >= 90 else 'B' if quality_score >= 80 else 'C' if quality_score >= 70 else 'D' if quality_score >= 60 else 'F'
-        }
-    except Exception as e:
-        return {
-            'issues': [f"Analysis error: {str(e)}"],
-            'metrics': {},
-            'quality_score': 0,
-            'grade': 'F'
-        }
+CORS(app)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
     return jsonify({
         "status": "healthy",
         "service": "roast-code-backend",
@@ -478,7 +430,6 @@ def health_check():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_code():
-    """Analyze code endpoint"""
     try:
         data = request.json
         code = data.get('code', '')
@@ -487,13 +438,29 @@ def analyze_code():
         if not code:
             return jsonify({"error": "No code provided"}), 400
         
-        # Analyze code
-        analysis = analyze_code_simple(code, language)
+        # Simple analysis
+        lines = code.splitlines()
+        line_count = len(lines)
         
-        # Generate simple roast
-        roast_text = "Your code looks decent! Keep up the good work!"
-        if analysis['quality_score'] < 60:
-            roast_text = "Your code needs some work. Consider refactoring!"
+        # Mock analysis
+        analysis = {
+            'issues': [
+                "Consider adding comments",
+                "Use meaningful variable names",
+                "Break long functions into smaller ones"
+            ] if line_count > 10 else [],
+            'metrics': {
+                'line_count': line_count,
+                'quality_score': 85 if line_count < 50 else 70
+            },
+            'quality_score': 85 if line_count < 50 else 70,
+            'grade': 'A' if line_count < 50 else 'B'
+        }
+        
+        # Mock roast
+        roast_text = "Your code looks pretty good! Keep it up!"
+        if line_count > 100:
+            roast_text = "Wow, that's a lot of code! Consider breaking it into modules."
         
         return jsonify({
             "success": True,
@@ -501,7 +468,7 @@ def analyze_code():
             "roast": {
                 "text": roast_text,
                 "intensity": "medium",
-                "model": "simple-analyzer"
+                "model": "mock-analyzer"
             },
             "suggestions": [
                 "Add comments to explain complex logic",
@@ -518,7 +485,6 @@ def analyze_code():
 
 @app.route('/api/generate', methods=['POST'])
 def generate_code():
-    """Generate code endpoint"""
     try:
         data = request.json
         prompt = data.get('prompt', '')
@@ -526,14 +492,16 @@ def generate_code():
         if not prompt:
             return jsonify({"error": "No prompt provided"}), 400
         
-        # Simple code generation
+        # Mock generated code
         generated_code = f'''# Generated code for: {prompt}
 
 def solution():
     """
     TODO: Implement your solution here
     """
-    pass
+    # Your code goes here
+    result = None
+    return result
 
 if __name__ == "__main__":
     solution()'''
