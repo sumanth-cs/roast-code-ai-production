@@ -98,84 +98,44 @@
 
 # CMD ["/app/start.sh"]
 
-# Dockerfile - FIXED FOR RAILWAY
+# Dockerfile - ULTRA SIMPLE VERSION
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    nginx \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements FIRST for better caching
+# Copy requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy all code
 COPY . .
-
-# Configure nginx as reverse proxy
-RUN echo 'events {}\n\
-http {\n\
-    server {\n\
-        listen $PORT;\n\
-        \n\
-        # Backend API\n\
-        location /api/ {\n\
-            proxy_pass http://localhost:5001/;\n\
-            proxy_set_header Host $host;\n\
-            proxy_set_header X-Real-IP $remote_addr;\n\
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
-        }\n\
-        \n\
-        # Streamlit frontend\n\
-        location / {\n\
-            proxy_pass http://localhost:8501/;\n\
-            proxy_set_header Host $host;\n\
-            proxy_set_header X-Real-IP $remote_addr;\n\
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
-            proxy_http_version 1.1;\n\
-            proxy_set_header Upgrade $http_upgrade;\n\
-            proxy_set_header Connection "upgrade";\n\
-        }\n\
-    }\n\
-}' > /etc/nginx/nginx.conf
 
 # Create startup script
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
 echo "Starting Roast Code AI..."\n\
-echo "PORT: $PORT"\n\
-\n\
-# Export PORT for nginx config\n\
-export PORT=${PORT:-10000}\n\
+echo "Flask backend on port: 5001"\n\
+echo "Streamlit frontend on port: 8501"\n\
 \n\
 # Start Flask backend\n\
-cd /app/backend && gunicorn --bind 0.0.0.0:5001 --workers 1 --timeout 120 app:app &\n\
+cd /app/backend && python -m gunicorn app:app --bind 0.0.0.0:5001 --workers 1 --timeout 120 &\n\
 \n\
 # Start Streamlit frontend\n\
 cd /app/frontend && streamlit run app.py \\\n\
     --server.port=8501 \\\n\
     --server.address=0.0.0.0 \\\n\
     --server.headless=true \\\n\
-    --browser.gatherUsageStats=false \\\n\
-    --server.enableCORS=false \\\n\
-    --server.enableXsrfProtection=false &\n\
-\n\
-# Start nginx with the right port\n\
-envsubst < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf.tmp && mv /etc/nginx/nginx.conf.tmp /etc/nginx/nginx.conf\n\
-nginx -g "daemon off;" &\n\
+    --browser.gatherUsageStats=false &\n\
 \n\
 # Keep container running\n\
 wait\n' > /app/start.sh && chmod +x /app/start.sh
 
-# Install envsubst
-RUN apt-get update && apt-get install -y gettext-base && rm -rf /var/lib/apt/lists/*
-
-EXPOSE 10000
+EXPOSE 8501
 
 CMD ["/app/start.sh"]

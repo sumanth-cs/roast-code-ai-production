@@ -147,7 +147,7 @@ if selected == "Code Analysis":
                     try:
                         # Try to call backend
                         response = requests.post(
-                            "http://localhost:5001/api/analyze",
+                            "/api/analyze",
                             json={
                                 "code": code,
                                 "language": language,
@@ -256,7 +256,7 @@ elif selected == "Code Generation":
             with st.spinner("Generating code... This might take a moment."):
                 try:
                     response = requests.post(
-                        "http://localhost:5001/api/generate",
+                        "/api/generate",
                         json={"prompt": prompt, "language": language},
                         timeout=30
                     )
@@ -300,7 +300,7 @@ if __name__ == "__main__":
 st.markdown("---")
 st.markdown("### 🔗 Backend Status")
 try:
-    health_response = requests.get("http://localhost:5001/api/health", timeout=5)
+    health_response = requests.get("/api/health", timeout=5)
     if health_response.status_code == 200:
         st.success("✅ Backend is healthy")
     else:

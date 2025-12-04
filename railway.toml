@@ -1,4 +1,4 @@
-# railway.toml
+# railway.toml - FIXED
 [build]
 builder = "dockerfile"
 dockerfile = "Dockerfile"
@@ -11,10 +11,11 @@ restartPolicyMaxRetries = 5
 
 [[services]]
 name = "roast-code-ai"
-port = 10000
+port = 5001  # Change to 5001 (Flask port)
 
 [services.env]
 FLASK_DEBUG = "False"
+PORT = "5001"  # Add this line
 OPENAI_API_KEY = ""
 GEMINI_API_KEY = ""
 ELEVENLABS_API_KEY = ""
