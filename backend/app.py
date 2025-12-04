@@ -411,7 +411,6 @@
 #     port = int(os.getenv('PORT', 5001))
 #     socketio.run(app, host='0.0.0.0', port=port, debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
 
-# backend/app.py - ULTRA SIMPLE VERSION
 import os
 from datetime import datetime
 from flask import Flask, request, jsonify
@@ -420,100 +419,59 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    return jsonify({
-        "status": "healthy",
-        "service": "roast-code-backend",
+@app.get("/api/health")
+def health():
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+@app.post("/api/analyze")
+def analyze():
+    data = request.json
+    code = data.get("code", "")
+    language = data.get("language", "python")
+
+    if not code:
+        return {"error": "No code provided"}, 400
+
+    lines = code.splitlines()
+    line_count = len(lines)
+
+    quality_score = 90 if line_count < 50 else 70
+    grade = "A" if quality_score >= 90 else "B"
+
+    roast = "🔥 Your code is clean!" if quality_score > 80 else "⚠️ Needs improvement."
+
+    return {
+        "success": True,
+        "analysis": {
+            "metrics": {
+                "line_count": line_count,
+                "character_count": len(code),
+                "quality_score": quality_score
+            },
+            "quality_score": quality_score,
+            "grade": grade,
+            "issues": []
+        },
+        "roast": {"text": roast, "intensity": "medium"},
         "timestamp": datetime.utcnow().isoformat()
-    })
+    }
 
-@app.route('/api/analyze', methods=['POST'])
-def analyze_code():
-    try:
-        data = request.json
-        code = data.get('code', '')
-        language = data.get('language', 'python')
-        
-        if not code:
-            return jsonify({"error": "No code provided"}), 400
-        
-        # Simple analysis
-        lines = code.splitlines()
-        line_count = len(lines)
-        
-        # Mock analysis
-        analysis = {
-            'issues': [
-                "Consider adding comments",
-                "Use meaningful variable names",
-                "Break long functions into smaller ones"
-            ] if line_count > 10 else [],
-            'metrics': {
-                'line_count': line_count,
-                'quality_score': 85 if line_count < 50 else 70
-            },
-            'quality_score': 85 if line_count < 50 else 70,
-            'grade': 'A' if line_count < 50 else 'B'
-        }
-        
-        # Mock roast
-        roast_text = "Your code looks pretty good! Keep it up!"
-        if line_count > 100:
-            roast_text = "Wow, that's a lot of code! Consider breaking it into modules."
-        
-        return jsonify({
-            "success": True,
-            "analysis": analysis,
-            "roast": {
-                "text": roast_text,
-                "intensity": "medium",
-                "model": "mock-analyzer"
-            },
-            "suggestions": [
-                "Add comments to explain complex logic",
-                "Break long functions into smaller ones",
-                "Use meaningful variable names"
-            ],
-            "timestamp": datetime.utcnow().isoformat()
-        })
-    except Exception as e:
-        return jsonify({
-            "error": "Internal server error",
-            "message": str(e)
-        }), 500
+@app.post("/api/generate")
+def generate():
+    data = request.json
+    prompt = data.get("prompt", "")
 
-@app.route('/api/generate', methods=['POST'])
-def generate_code():
-    try:
-        data = request.json
-        prompt = data.get('prompt', '')
-        
-        if not prompt:
-            return jsonify({"error": "No prompt provided"}), 400
-        
-        # Mock generated code
-        generated_code = f'''# Generated code for: {prompt}
+    if not prompt:
+        return {"error": "Provide a prompt"}, 400
 
+    generated = f"""
+# Generated code for: {prompt}
 def solution():
-    """
-    TODO: Implement your solution here
-    """
-    # Your code goes here
-    result = None
-    return result
+    pass
+"""
+
+    return {"success": True, "code": generated}
 
 if __name__ == "__main__":
-    solution()'''
-        
-        return jsonify({
-            "success": True,
-            "code": generated_code,
-            "message": "Code generated successfully"
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    port = int(os.getenv("PORT", 5001))
+    app.run(host="0.0.0.0", port=port)
