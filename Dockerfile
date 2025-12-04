@@ -99,11 +99,12 @@
 # CMD ["/app/start.sh"]
 
 # Dockerfile - ULTRA SIMPLE VERSION
+# Dockerfile - NO NGINX, SIMPLE VERSION
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install dependencies
+# Install minimal dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -115,16 +116,25 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all code
 COPY . .
 
+# Health check script
+RUN echo '#!/bin/bash\n\
+# Simple health check\n\
+curl -f http://localhost:5001/api/health 2>/dev/null || exit 1\n' > /app/healthcheck.sh && chmod +x /app/healthcheck.sh
+
 # Create startup script
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
-echo "Starting Roast Code AI..."\n\
-echo "Flask backend on port: 5001"\n\
-echo "Streamlit frontend on port: 8501"\n\
+echo "=== Starting Roast Code AI ===\n\
+Backend (Flask): http://localhost:5001\n\
+Frontend (Streamlit): http://localhost:8501\n\
+==="\n\
 \n\
 # Start Flask backend\n\
-cd /app/backend && python -m gunicorn app:app --bind 0.0.0.0:5001 --workers 1 --timeout 120 &\n\
+cd /app/backend && gunicorn --bind 0.0.0.0:5001 --workers 1 --timeout 120 app:app &\n\
+\n\
+# Wait for backend to start\n\
+sleep 5\n\
 \n\
 # Start Streamlit frontend\n\
 cd /app/frontend && streamlit run app.py \\\n\
@@ -136,6 +146,9 @@ cd /app/frontend && streamlit run app.py \\\n\
 # Keep container running\n\
 wait\n' > /app/start.sh && chmod +x /app/start.sh
 
-EXPOSE 8501
+EXPOSE 5001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD /app/healthcheck.sh
 
 CMD ["/app/start.sh"]
