@@ -71,10 +71,11 @@
 # if __name__ == "__main__":
 #     main()
 
+import os
 import streamlit as st
 import requests
 
-BACKEND_URL = st.secrets.get("BACKEND_URL", "http://localhost:5001")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5001")
 
 st.set_page_config(page_title="Roast Code AI", page_icon="🔥", layout="wide")
 
