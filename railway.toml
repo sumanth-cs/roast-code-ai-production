@@ -1,27 +1,25 @@
-# railway.toml - FIXED
 [build]
 builder = "dockerfile"
 dockerfile = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/api/health"
+healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
 
 [[services]]
 name = "roast-code-ai"
-port = 5001  # Change to 5001 (Flask port)
+port = 5000
 
 [services.env]
 FLASK_DEBUG = "False"
-PORT = "5001"  # Add this line
 OPENAI_API_KEY = ""
 GEMINI_API_KEY = ""
 ELEVENLABS_API_KEY = ""
 
 [services.checks]
-http = "/api/health"
-initialDelay = 30
-timeout = 30
-interval = 60
+http = "/health"
+initialDelay = 10
+timeout = 10
+interval = 30
