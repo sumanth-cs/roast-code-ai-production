@@ -1,24 +1,24 @@
-flask==2.3.3
-flask-cors==4.0.0
-flask-socketio==5.3.6
-gunicorn==21.2.0
-redis==5.0.1
-eventlet==0.33.3
-transformers==4.38.2
-torch==2.2.1
-openai==1.12.0
-streamlit==1.31.0
-python-dotenv==1.0.0
-requests==2.31.0
-numpy==1.24.4
-streamlit-option-menu==0.3.6
-lizard==1.17.10
-
-# requirements.txt - MINIMAL VERSION
-# requirements.txt - MINIMAL VERSION
 # flask==2.3.3
 # flask-cors==4.0.0
-# streamlit==1.31.0
-# requests==2.31.0
-# python-dotenv==1.0.0
+# flask-socketio==5.3.6
+# gunicorn==21.2.0
+# redis==5.0.1
+# eventlet==0.33.3
+# transformers==4.38.2
+# torch==2.2.1
 # openai==1.12.0
+# streamlit==1.31.0
+# python-dotenv==1.0.0
+# requests==2.31.0
+# numpy==1.24.4
+# streamlit-option-menu==0.3.6
+# lizard==1.17.10
+
+# requirements.txt - MINIMAL VERSION
+flask==2.3.3
+flask-cors==4.0.0
+streamlit==1.31.0
+requests==2.31.0
+python-dotenv==1.0.0
+openai==1.12.0
+streamlit-option-menu==0.3.6
