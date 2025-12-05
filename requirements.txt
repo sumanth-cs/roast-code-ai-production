@@ -32,24 +32,32 @@
 
 # requirements.txt - UPDATED
 # Core dependencies
+# flask==2.3.3
+# flask-cors==4.0.0
+# streamlit==1.31.0
+# requests==2.31.0
+# python-dotenv==1.0.0
+# streamlit-option-menu==0.3.6
+
+# # Code analysis
+# autopep8==2.0.4
+# transformers==4.38.2
+# torch==2.2.1
+
+# # Optional AI services (won't crash if missing)
+# openai==1.12.0
+# google-generativeai==0.3.0
+
+# # For syntax highlighting (optional)
+# pygments==2.17.2
+
+# # For file uploads
+# watchdog==4.0.0
+
+
+# requirements.txt - LIGHTWEIGHT
 flask==2.3.3
 flask-cors==4.0.0
-streamlit==1.31.0
+autopep8==2.0.4
 requests==2.31.0
 python-dotenv==1.0.0
-streamlit-option-menu==0.3.6
-
-# Code analysis
-autopep8==2.0.4
-transformers==4.38.2
-torch==2.2.1
-
-# Optional AI services (won't crash if missing)
-openai==1.12.0
-google-generativeai==0.3.0
-
-# For syntax highlighting (optional)
-pygments==2.17.2
-
-# For file uploads
-watchdog==4.0.0
