@@ -1,20 +1,48 @@
+# services:
+#   - name: roast-backend
+#     type: web
+#     env: docker
+#     plan: free
+#     buildCommand: docker build -f Dockerfile.backend -t roast-backend .
+#     startCommand: docker run -p 10000:5001 roast-backend
+#     envVars:
+#       - key: PORT
+#         value: 5001
+
+#   - name: roast-frontend
+#     type: web
+#     env: docker
+#     plan: free
+#     buildCommand: docker build -f Dockerfile.frontend -t roast-frontend .
+#     startCommand: docker run -p 8501:8501 roast-frontend
+#     envVars:
+#       - key: BACKEND_URL
+#         value: https://roast-backend.onrender.com
+
+
+# render.yaml
 services:
-  - name: roast-backend
+  - name: roast-code-ai-backend
     type: web
     env: docker
     plan: free
-    buildCommand: docker build -f Dockerfile.backend -t roast-backend .
-    startCommand: docker run -p 10000:5001 roast-backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: PORT
         value: 5001
+      - key: FLASK_DEBUG
+        value: false
+    healthCheckPath: /api/health
+    autoDeploy: true
 
-  - name: roast-frontend
+  - name: roast-code-ai-frontend
     type: web
     env: docker
     plan: free
-    buildCommand: docker build -f Dockerfile.frontend -t roast-frontend .
-    startCommand: docker run -p 8501:8501 roast-frontend
+    dockerfilePath: ./Dockerfile.frontend
+    dockerContext: .
     envVars:
       - key: BACKEND_URL
-        value: https://roast-backend.onrender.com
+        value: https://roast-code-ai-backend.onrender.com
+    autoDeploy: true

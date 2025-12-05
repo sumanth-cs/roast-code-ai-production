@@ -11,28 +11,22 @@
 
 # CMD ["python", "backend/app.py"]
 
-# Dockerfile.backend - LIGHTWEIGHT
+# Dockerfile (for backend)
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
+# Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copy backend code
 COPY backend ./backend
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
+# Create a simple wsgi.py if it doesn't exist
+RUN echo "from app import app\n\nif __name__ == '__main__':\n    app.run(host='0.0.0.0', port=5001)" > /app/backend/wsgi.py
 
 EXPOSE 5001
 

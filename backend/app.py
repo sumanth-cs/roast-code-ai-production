@@ -813,7 +813,7 @@
 #     port = int(os.getenv("PORT", 5001))
 #     app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_DEBUG", "False") == "True")
 
-# backend/app.py - LIGHTWEIGHT VERSION
+# backend/app.py - FIXED VERSION
 import os
 import json
 import ast
@@ -823,327 +823,36 @@ from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import autopep8
-import requests
 
 app = Flask(__name__)
 CORS(app)
 
-# Simple roast templates (no heavy AI models)
+# Roast templates (same as before)
 ROAST_TEMPLATES = {
     "no_docstring": {
-        "mild": [
-            "No docstring found. Documentation helps others understand your code!",
-            "Consider adding a docstring to explain what this does.",
-            "Missing documentation - future you will thank you for adding some!"
-        ],
-        "medium": [
-            "Bruh, no docstring? Did you forget what this does?",
-            "This code is undocumented - it's like a mystery box!",
-            "Where are the docs? Even my calculator has a manual!"
-        ],
-        "brutal": [
-            "Zero documentation? That's brave... or just lazy!",
-            "This code is more undocumented than a secret government project!",
-            "No docs? Good luck to whoever has to maintain this!"
-        ]
+        "mild": ["No docstring found. Documentation helps others understand your code!",],
+        "medium": ["Bruh, no docstring? Did you forget what this does?",],
+        "brutal": ["Zero documentation? That's brave... or just lazy!",]
     },
     "single_letter_var": {
-        "mild": [
-            "Consider using more descriptive variable names.",
-            "Single-letter variables can be hard to understand.",
-            "Try naming variables based on their purpose."
-        ],
-        "medium": [
-            "Single-letter variables? How original!",
-            "Bruh, you're not saving bytes with 'x' and 'y'!",
-            "I've seen more creative names on a license plate!"
-        ],
-        "brutal": [
-            "Single-letter variables? Did your keyboard break?",
-            "This variable naming is what happens when creativity dies!",
-            "I'd rather read binary than try to understand 'a', 'b', 'c'!"
-        ]
-    },
-    "long_function": {
-        "mild": [
-            "This function is getting long. Consider breaking it up.",
-            "Long functions can be hard to maintain and test.",
-            "Try to keep functions focused on a single responsibility."
-        ],
-        "medium": [
-            "This function is longer than my last relationship!",
-            "Bruh, this function needs its own zip code!",
-            "Is this a function or a novel?"
-        ],
-        "brutal": [
-            "This function is so long, I need a snack break to read it!",
-            "I've seen shorter Russian novels than this function!",
-            "This function needs an intermission!"
-        ]
+        "mild": ["Consider using more descriptive variable names.",],
+        "medium": ["Single-letter variables? How original!",],
+        "brutal": ["Single-letter variables? Did your keyboard break?",]
     },
     "syntax_error": {
-        "mild": [
-            "There's a syntax error in your code. Check the highlighted line.",
-            "Python can't understand this syntax. Let's fix it!",
-            "Syntax error detected - every programmer's favorite!"
-        ],
-        "medium": [
-            "Oops! Syntax error! Did you type this with your eyes closed?",
-            "Python says 'no' to this syntax!",
-            "This code has more errors than my first dating profile!"
-        ],
-        "brutal": [
-            "Syntax error! My cat could write better Python!",
-            "This isn't code, it's modern art! Unparseable art!",
-            "Even autocorrect wouldn't know what to do with this!"
-        ]
+        "mild": ["There's a syntax error in your code. Check the highlighted line.",],
+        "medium": ["Oops! Syntax error! Did you type this with your eyes closed?",],
+        "brutal": ["Syntax error! My cat could write better Python!",]
     },
     "general_good": {
-        "mild": ["Nice code! Keep up the good work!", "Clean and readable - well done!", "Good job on this code!"],
-        "medium": ["Not bad! Could use some polish, but good effort!", "Decent code! Room for improvement though.", "You're on the right track!"],
-        "brutal": ["It works... that's something, right?", "This code exists. That's an accomplishment!", "Hey, at least it's not PHP!"]
+        "mild": ["Nice code! Keep up the good work!",],
+        "medium": ["Not bad! Could use some polish, but good effort!",],
+        "brutal": ["It works... that's something, right?",]
     }
 }
 
-# Code examples for generation
-CODE_EXAMPLES = {
-    "add": '''def add_numbers(a, b):
-    """Add two numbers together."""
-    return a + b
-
-result = add_numbers(5, 3)
-print(f"Sum: {result}")''',
-    
-    "factorial": '''def factorial(n):
-    """Calculate factorial of a number."""
-    if n < 0:
-        raise ValueError("Factorial is not defined for negative numbers")
-    if n == 0:
-        return 1
-    result = 1
-    for i in range(1, n + 1):
-        result *= i
-    return result
-
-print(factorial(5))  # 120''',
-    
-    "fibonacci": '''def fibonacci(n):
-    """Generate Fibonacci sequence up to n terms."""
-    if n <= 0:
-        return []
-    elif n == 1:
-        return [0]
-    elif n == 2:
-        return [0, 1]
-    
-    sequence = [0, 1]
-    for i in range(2, n):
-        sequence.append(sequence[i-1] + sequence[i-2])
-    return sequence
-
-print(fibonacci(10))''',
-    
-    "palindrome": '''def is_palindrome(s):
-    """Check if a string is a palindrome."""
-    s = ''.join(c.lower() for c in s if c.isalnum())
-    return s == s[::-1]
-
-print(is_palindrome("racecar"))  # True
-print(is_palindrome("hello"))    # False''',
-    
-    "calculator": '''def calculator(a, b, operation):
-    """Basic calculator with four operations."""
-    if operation == 'add':
-        return a + b
-    elif operation == 'subtract':
-        return a - b
-    elif operation == 'multiply':
-        return a * b
-    elif operation == 'divide':
-        if b != 0:
-            return a / b
-        else:
-            raise ValueError("Cannot divide by zero")
-    else:
-        raise ValueError("Unsupported operation")
-
-# Example usage
-print(calculator(10, 5, 'add'))'''
-}
-
-def analyze_python_code(code):
-    """Lightweight Python code analysis"""
-    issues = []
-    suggestions = []
-    
-    try:
-        # Try to parse the code
-        tree = ast.parse(code)
-        
-        # Check for issues
-        for node in ast.walk(tree):
-            # Check for missing docstrings
-            if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.Module)):
-                if not ast.get_docstring(node):
-                    name = getattr(node, 'name', 'module')
-                    issues.append(f"No docstring for {node.__class__.__name__.lower()} '{name}'")
-                    suggestions.append(f"Add a docstring to {name} explaining its purpose")
-            
-            # Check for single-letter variables
-            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-                if len(node.id) == 1 and node.id.isalpha():
-                    issues.append(f"Single-letter variable name '{node.id}'")
-                    suggestions.append(f"Rename '{node.id}' to something more descriptive")
-            
-            # Check for generic variable names
-            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-                if node.id.lower() in ['data', 'temp', 'var', 'value', 'stuff', 'things']:
-                    issues.append(f"Generic variable name '{node.id}'")
-                    suggestions.append(f"Use a more specific name than '{node.id}'")
-            
-            # Check for long functions
-            if isinstance(node, ast.FunctionDef):
-                body_lines = len(node.body)
-                if body_lines > 20:
-                    issues.append(f"Overly long function '{node.name}' ({body_lines} lines)")
-                    suggestions.append(f"Break '{node.name}' into smaller functions")
-        
-        # Check line length
-        lines = code.splitlines()
-        for i, line in enumerate(lines, 1):
-            if len(line) > 79:  # PEP 8 recommends 79 chars
-                issues.append(f"Line {i} too long ({len(line)} characters)")
-                suggestions.append("Keep lines under 79 characters for readability")
-        
-        # Check for TODO/FIXME comments
-        if 'TODO' in code or 'FIXME' in code:
-            issues.append("TODO/FIXME comments found")
-            suggestions.append("Address TODO/FIXME comments before finalizing code")
-        
-        # Count functions and classes
-        function_count = code.count('def ')
-        class_count = code.count('class ')
-        
-        # Calculate metrics
-        line_count = len(lines)
-        char_count = len(code)
-        
-        # Calculate quality score (simplified)
-        quality_score = 100
-        quality_score -= len(issues) * 5
-        quality_score -= (function_count * 2) if function_count > 5 else 0
-        quality_score = max(0, min(100, quality_score))
-        
-        # Determine grade
-        if quality_score >= 90:
-            grade = 'A'
-        elif quality_score >= 80:
-            grade = 'B'
-        elif quality_score >= 70:
-            grade = 'C'
-        elif quality_score >= 60:
-            grade = 'D'
-        else:
-            grade = 'F'
-        
-        metrics = {
-            "line_count": line_count,
-            "character_count": char_count,
-            "function_count": function_count,
-            "class_count": class_count,
-            "quality_score": quality_score,
-            "grade": grade,
-            "issue_count": len(issues)
-        }
-        
-    except SyntaxError as e:
-        # Handle syntax errors
-        error_msg = str(e).split('\n')[0]
-        issues = [f"Syntax error: {error_msg}"]
-        suggestions = ["Fix the syntax error to proceed with analysis"]
-        metrics = {
-            "line_count": len(code.splitlines()),
-            "character_count": len(code),
-            "function_count": 0,
-            "class_count": 0,
-            "quality_score": 40,
-            "grade": 'F',
-            "issue_count": 1
-        }
-    except Exception as e:
-        # Handle other errors
-        issues = [f"Analysis error: {str(e)}"]
-        suggestions = ["Try with simpler code or check for syntax errors"]
-        metrics = {
-            "line_count": len(code.splitlines()),
-            "character_count": len(code),
-            "function_count": 0,
-            "class_count": 0,
-            "quality_score": 50,
-            "grade": 'F',
-            "issue_count": 1
-        }
-    
-    return issues, suggestions, metrics
-
-def generate_roast(issues, intensity="medium"):
-    """Generate roast based on issues"""
-    if not issues:
-        category = "general_good"
-    elif any("Syntax error" in issue for issue in issues):
-        category = "syntax_error"
-    elif any("No docstring" in issue for issue in issues):
-        category = "no_docstring"
-    elif any("Single-letter" in issue for issue in issues):
-        category = "single_letter_var"
-    elif any("Overly long" in issue for issue in issues):
-        category = "long_function"
-    else:
-        category = "general_good"
-    
-    templates = ROAST_TEMPLATES.get(category, {}).get(intensity, [])
-    if templates:
-        return random.choice(templates)
-    else:
-        return "Let's take a look at your code..."
-
-def correct_code(code):
-    """Simple code correction using autopep8"""
-    try:
-        corrected = autopep8.fix_code(code)
-        return corrected
-    except:
-        return code
-
-def generate_code_from_prompt(prompt):
-    """Generate code based on prompt keywords"""
-    prompt_lower = prompt.lower()
-    
-    # Check for keywords
-    if any(word in prompt_lower for word in ['add', 'sum', 'plus', 'addition']):
-        return CODE_EXAMPLES["add"], "Here's a simple addition function!"
-    elif any(word in prompt_lower for word in ['factorial', '!', 'fact']):
-        return CODE_EXAMPLES["factorial"], "Factorial calculation coming right up!"
-    elif any(word in prompt_lower for word in ['fibonacci', 'fib']):
-        return CODE_EXAMPLES["fibonacci"], "Fibonacci sequence - a classic!"
-    elif any(word in prompt_lower for word in ['palindrome', 'reverse', 'mirror']):
-        return CODE_EXAMPLES["palindrome"], "Palindrome checker - reads the same forwards and backwards!"
-    elif any(word in prompt_lower for word in ['calculator', 'calculate', 'math']):
-        return CODE_EXAMPLES["calculator"], "A basic calculator for you!"
-    elif any(word in prompt_lower for word in ['hello', 'world', 'print']):
-        return '''print("Hello, World!")''', "The classic Hello World!"
-    else:
-        # Generate simple function based on prompt
-        func_name = prompt_lower.split()[0] if prompt_lower.split() else "solution"
-        return f'''def {func_name}():
-    """{prompt}"""
-    # Your implementation here
-    pass
-
-if __name__ == "__main__":
-    {func_name}()''', f"Generated a function skeleton for '{prompt}'"
-
-@app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
+@app.route('/health', methods=['GET'])  # Add this line for compatibility
 def health():
     return jsonify({
         "status": "healthy",
@@ -1163,23 +872,74 @@ def analyze():
         if not code:
             return jsonify({"error": "No code provided"}), 400
         
-        # Currently only support Python
-        if language != 'python':
-            return jsonify({
-                "error": f"Language '{language}' not fully supported yet",
-                "suggestion": "Try with Python code"
-            }), 400
+        # Simple analysis
+        lines = code.splitlines()
+        line_count = len(lines)
+        issues = []
+        suggestions = []
         
-        # Analyze code
-        issues, suggestions, metrics = analyze_python_code(code)
+        try:
+            # Try to parse Python code
+            tree = ast.parse(code)
+            
+            # Check for basic issues
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                    if not ast.get_docstring(node):
+                        issues.append(f"No docstring for {node.__class__.__name__.lower()} '{node.name}'")
+                        suggestions.append(f"Add a docstring to '{node.name}'")
+                
+                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                    if len(node.id) == 1 and node.id.isalpha():
+                        issues.append(f"Single-letter variable name '{node.id}'")
+                        suggestions.append(f"Rename '{node.id}' to something descriptive")
+            
+            # Check line length
+            for i, line in enumerate(lines, 1):
+                if len(line) > 79:
+                    issues.append(f"Line {i} too long ({len(line)} characters)")
+                    suggestions.append("Keep lines under 79 characters")
+        
+        except SyntaxError as e:
+            error_msg = str(e).split('\n')[0]
+            issues.append(f"Syntax error: {error_msg}")
+            suggestions.append("Fix the syntax error")
+        except:
+            pass
+        
+        # Quality score
+        quality_score = 100
+        quality_score -= len(issues) * 10
+        quality_score = max(0, min(100, quality_score))
+        
+        # Grade
+        if quality_score >= 90:
+            grade = 'A'
+        elif quality_score >= 80:
+            grade = 'B'
+        elif quality_score >= 70:
+            grade = 'C'
+        elif quality_score >= 60:
+            grade = 'D'
+        else:
+            grade = 'F'
         
         # Generate roast
-        roast_text = generate_roast(issues, roast_level)
+        if not issues:
+            category = "general_good"
+        elif any("Syntax error" in issue for issue in issues):
+            category = "syntax_error"
+        elif any("No docstring" in issue for issue in issues):
+            category = "no_docstring"
+        elif any("Single-letter" in issue for issue in issues):
+            category = "single_letter_var"
+        else:
+            category = "general_good"
         
-        # Generate corrected code
-        corrected_code = correct_code(code)
+        templates = ROAST_TEMPLATES.get(category, {}).get(roast_level, [])
+        roast_text = random.choice(templates) if templates else "Let's look at your code..."
         
-        # Generate audio roast text (for TTS)
+        # Generate audio roast
         audio_roast = f"Code analysis complete. {roast_text} Found {len(issues)} issues."
         
         return jsonify({
@@ -1187,17 +947,21 @@ def analyze():
             "analysis": {
                 "issues": issues,
                 "suggestions": suggestions,
-                "metrics": metrics,
-                "quality_score": metrics.get("quality_score", 0),
-                "grade": metrics.get("grade", "N/A")
+                "metrics": {
+                    "line_count": line_count,
+                    "character_count": len(code),
+                    "quality_score": quality_score,
+                    "grade": grade,
+                    "issue_count": len(issues)
+                },
+                "quality_score": quality_score,
+                "grade": grade
             },
             "roast": {
                 "text": roast_text,
                 "intensity": roast_level,
                 "audio_text": audio_roast
             },
-            "corrected_code": corrected_code,
-            "language": language,
             "timestamp": datetime.utcnow().isoformat()
         })
         
@@ -1217,16 +981,38 @@ def generate():
         if not prompt:
             return jsonify({"error": "No prompt provided"}), 400
         
-        if language != 'python':
-            return jsonify({
-                "error": f"Language '{language}' not fully supported yet",
-                "suggestion": "Try with Python generation"
-            }), 400
+        # Simple code generation
+        if "add" in prompt.lower() or "sum" in prompt.lower():
+            code = '''def add_numbers(a, b):
+    """Add two numbers together."""
+    return a + b
+
+result = add_numbers(5, 3)
+print(f"Sum: {result}")'''
+            roast = "Here's a simple addition function!"
+        elif "factorial" in prompt.lower():
+            code = '''def factorial(n):
+    """Calculate factorial of a number."""
+    if n < 0:
+        raise ValueError("Factorial not defined for negative numbers")
+    result = 1
+    for i in range(1, n + 1):
+        result *= i
+    return result
+
+print(factorial(5))  # 120'''
+            roast = "Factorial calculation coming right up!"
+        else:
+            code = f'''# Generated code for: {prompt}
+def solution():
+    """Implement your solution here."""
+    # Your code goes here
+    pass
+
+if __name__ == "__main__":
+    solution()'''
+            roast = f"Generated a function skeleton for '{prompt}'"
         
-        # Generate code
-        code, roast = generate_code_from_prompt(prompt)
-        
-        # Generate audio roast
         audio_roast = f"Code generated! {roast}"
         
         return jsonify({
@@ -1241,37 +1027,6 @@ def generate():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/audio', methods=['POST'])
-def text_to_speech():
-    """Simple text-to-speech endpoint using browser's TTS"""
-    try:
-        data = request.json
-        text = data.get('text', '')
-        
-        if not text:
-            return jsonify({"error": "No text provided"}), 400
-        
-        return jsonify({
-            "success": True,
-            "text": text,
-            "message": "Use browser's SpeechSynthesis API for TTS",
-            "instruction": "Use: speechSynthesis.speak(new SpeechSynthesisUtterance('text'))"
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/languages', methods=['GET'])
-def get_languages():
-    return jsonify({
-        "languages": [
-            {"id": "python", "name": "Python", "supported": True},
-            {"id": "javascript", "name": "JavaScript", "supported": False},
-            {"id": "java", "name": "Java", "supported": False},
-            {"id": "cpp", "name": "C++", "supported": False}
-        ]
-    })
-
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
